@@ -93,12 +93,11 @@ async def joinvc(_, message):
 @app.on_message(filters.command("leavevc") & ~filters.private)
 async def leavevc(_, message):
     chat_id = message.chat.id
-    if chat_id in db:
-        if "call" in db[chat_id]:
-            vc = db[chat_id]["call"]
-            del db[chat_id]["call"]
-            await vc.leave_current_group_call()
-            await vc.stop()
+    if chat_id in db and "call" in db[chat_id]:
+        vc = db[chat_id]["call"]
+        del db[chat_id]["call"]
+        await vc.leave_current_group_call()
+        await vc.stop()
     await message.reply_text("__**Left The Voice Chat**__", quote=False)
 
 
@@ -130,9 +129,8 @@ async def pause_song_func(_, message):
         return await message.reply_text("**VC isn't started**")
     if "call" not in db[chat_id]:
         return await message.reply_text("**VC isn't started**")
-    if "paused" in db[chat_id]:
-        if db[chat_id]["paused"] == True:
-            return await message.reply_text("**Already paused**")
+    if "paused" in db[chat_id] and db[chat_id]["paused"] == True:
+        return await message.reply_text("**Already paused**")
     db[chat_id]["paused"] = True
     vc = db[chat_id]["call"]
     vc.pause_playout()
@@ -148,9 +146,8 @@ async def resume_song(_, message):
         return await message.reply_text("**VC isn't started**")
     if "call" not in db[chat_id]:
         return await message.reply_text("**VC isn't started**")
-    if "paused" in db[chat_id]:
-        if db[chat_id]["paused"] == False:
-            return await message.reply_text("**Already playing**")
+    if "paused" in db[chat_id] and db[chat_id]["paused"] == False:
+        return await message.reply_text("**Already playing**")
     db[chat_id]["paused"] = False
     vc = db[chat_id]["call"]
     vc.resume_playout()
@@ -233,9 +230,11 @@ async def queue_list(_, message):
         return await message.reply_text(
             "__**Queue Is Empty, Just Like Your Life.**__", quote=False
         )
-    text = ""
-    for count, song in enumerate(queue._queue, 1):
-        text += f"**{count}. {song['service'].__name__}** | __{song['query']}__  |  {song['requested_by']}\n"
+    text = "".join(
+        f"**{count}. {song['service'].__name__}** | __{song['query']}__  |  {song['requested_by']}\n"
+        for count, song in enumerate(queue._queue, 1)
+    )
+
     if len(text) > 4090:
         return await message.reply_text(
             f"**There are {queue.qsize()} songs in queue.**"
@@ -303,10 +302,7 @@ async def tgplay(_, message):
 async def list_vc(_, message):
     if len(db) == 0:
         return await message.reply_text("There are no active voice chats")
-    chats = []
-    for chat in db:
-        if "call" in db[chat]:
-            chats.append(int(chat))
+    chats = [int(chat) for chat in db if "call" in db[chat]]
     text = ""
     for count, chat_id in enumerate(chats, 1):
         try:

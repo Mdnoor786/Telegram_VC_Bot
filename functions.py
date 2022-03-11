@@ -26,7 +26,7 @@ else:
 if HEROKU:
     if is_config:
         from config import SESSION_STRING
-    elif not is_config:
+    else:
         from sample_config import SESSION_STRING
 
 app = Client(
@@ -107,7 +107,7 @@ async def download_and_transcode_song(url, chat_id):
 
 # Convert seconds to mm:ss
 def convert_seconds(seconds: int):
-    seconds = seconds % (24 * 3600)
+    seconds %= 24 * 3600
     seconds %= 3600
     minutes = seconds // 60
     seconds %= 60
@@ -128,8 +128,7 @@ def changeImageSize(maxWidth: int, maxHeight: int, image):
     heightRatio = maxHeight / image.size[1]
     newWidth = int(widthRatio * image.size[0])
     newHeight = int(heightRatio * image.size[1])
-    newImage = image.resize((newWidth, newHeight))
-    return newImage
+    return image.resize((newWidth, newHeight))
 
 
 # Generate cover for youtube
@@ -174,7 +173,6 @@ async def generate_cover(
         await change_vc_title(title, chat_id)
     except Exception:
         await app.send_message(chat_id, text="[ERROR]: FAILED TO EDIT VC TITLE, MAKE ME ADMIN.")
-        pass
     return final
 
 
